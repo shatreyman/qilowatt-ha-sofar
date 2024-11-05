@@ -1,0 +1,13 @@
+{
+    "domain": "qilowatt",
+    "name": "Qilowatt Integration",
+    "version": "1.0.0",
+    "documentation": "https://github.com/qilowatt/qilowatt-ha",
+    "requirements": ["qilowatt>=2024.11.7"],
+    "dependencies": [],
+    "codeowners": ["@tanelvakker"],
+    "config_flow": true,
+    "iot_class": "cloud_polling",
+    "integration_type": "hub",
+    "platforms": ["sensor"]
+  }
