@@ -1,6 +1,7 @@
 import logging
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from qilowatt import EnergyData, MetricsData
 
 from .base_inverter import BaseInverter
@@ -8,16 +9,34 @@ from .base_inverter import BaseInverter
 _LOGGER = logging.getLogger(__name__)
 
 
-class DeyeSolarAssistantInverter(BaseInverter):
-    """Implementation for Deye-SolarAssistant inverter."""
+class SolarAssistantInverter(BaseInverter):
+    """Implementation for SolarAssistant integrated inverters."""
 
     def __init__(self, hass: HomeAssistant, config_entry):
         super().__init__(hass, config_entry)
         self.hass = hass
+        self.device_id = config_entry.data["device_id"]
+        self.entity_registry = er.async_get(hass)
+        self.inverter_entities = {}
+        for entity in self.entity_registry.entities.values():
+            if entity.device_id == self.device_id:
+                self.inverter_entities[entity.entity_id] = entity.name
+
+    def find_entity_state(self, entity_id):
+        """Helper method to find a state by entity_id."""
+        return next(
+            (
+                self.hass.states.get(entity)
+                for entity in self.inverter_entities
+                if entity.endswith(entity_id)
+            ),
+            None,
+        )
 
     def get_state_float(self, entity_id, default=0.0):
         """Helper method to get a sensor state as float."""
-        state = self.hass.states.get(entity_id)
+
+        state = self.find_entity_state(entity_id)
         if state and state.state not in ("unknown", "unavailable", ""):
             try:
                 return float(state.state)
@@ -29,7 +48,7 @@ class DeyeSolarAssistantInverter(BaseInverter):
 
     def get_state_int(self, entity_id, default=0):
         """Helper method to get a sensor state as int."""
-        state = self.hass.states.get(entity_id)
+        state = self.find_entity_state(entity_id)
         if state and state.state not in ("unknown", "unavailable", ""):
             try:
                 return int(float(state.state))
@@ -42,23 +61,19 @@ class DeyeSolarAssistantInverter(BaseInverter):
     def get_energy_data(self):
         """Retrieve ENERGY data."""
         power = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_power_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_power_2"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_power_3"),
+            self.get_state_float("grid_power_1"),
+            self.get_state_float("grid_power_2"),
+            self.get_state_float("grid_power_3"),
         ]
-        today = self.get_state_float(
-            "sensor.deye_sunsynk_sol_ark_3_phase_grid_energy_in"
-        )
+        today = self.get_state_float("grid_energy_in")
         total = 0.0  # As per payload
         current = [0.0, 0.0, 0.0]  # As per payload
         voltage = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_voltage_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_voltage_2"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_grid_voltage_3"),
+            self.get_state_float("grid_voltage_1"),
+            self.get_state_float("grid_voltage_2"),
+            self.get_state_float("grid_voltage_3"),
         ]
-        frequency = self.get_state_float(
-            "sensor.deye_sunsynk_sol_ark_3_phase_grid_frequency"
-        )
+        frequency = self.get_state_float("grid_frequency")
 
         return EnergyData(
             Power=power,
@@ -72,48 +87,32 @@ class DeyeSolarAssistantInverter(BaseInverter):
     def get_metrics_data(self):
         """Retrieve METRICS data."""
         pv_power = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_power_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_power_2"),
+            self.get_state_float("pv_power_1"),
+            self.get_state_float("pv_power_2"),
         ]
         pv_voltage = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_voltage_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_voltage_2"),
+            self.get_state_float("pv_voltage_1"),
+            self.get_state_float("pv_voltage_2"),
         ]
         pv_current = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_current_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_pv_current_2"),
+            self.get_state_float("pv_current_1"),
+            self.get_state_float("pv_current_2"),
         ]
         load_power = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_load_power_1"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_load_power_2"),
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_load_power_3"),
+            self.get_state_float("load_power_1"),
+            self.get_state_float("load_power_2"),
+            self.get_state_float("load_power_3"),
         ]
         alarm_codes = [0, 0, 0, 0, 0, 0]  # As per payload
-        battery_soc = self.get_state_int(
-            "sensor.deye_sunsynk_sol_ark_3_phase_battery_state_of_charge"
-        )
+        battery_soc = self.get_state_int("battery_state_of_charge")
         load_current = [0.0, 0.0, 0.0]  # As per payload
-        battery_power = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_battery_power")
-        ]
-        battery_current = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_battery_current")
-        ]
-        battery_voltage = [
-            self.get_state_float("sensor.deye_sunsynk_sol_ark_3_phase_battery_voltage")
-        ]
+        battery_power = [self.get_state_float("battery_power")]
+        battery_current = [self.get_state_float("battery_current")]
+        battery_voltage = [self.get_state_float("battery_voltage")]
         inverter_status = 2  # As per payload
-        grid_export_limit = self.get_state_float(
-            "number.deye_sunsynk_sol_ark_3_phase_max_sell_power"
-        )
-        battery_temperature = [
-            self.get_state_float(
-                "sensor.deye_sunsynk_sol_ark_3_phase_battery_temperature"
-            )
-        ]
-        inverter_temperature = self.get_state_float(
-            "sensor.deye_sunsynk_sol_ark_3_phase_temperature"
-        )
+        grid_export_limit = self.get_state_float("max_sell_power")
+        battery_temperature = [self.get_state_float("battery_temperature")]
+        inverter_temperature = self.get_state_float("temperature")
 
         return MetricsData(
             PvPower=pv_power,
