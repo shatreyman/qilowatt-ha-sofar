@@ -60,7 +60,7 @@ class QilowattConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         for device in device_registry.devices.values():
             for identifier in device.identifiers:
-                domain, device_id = identifier
+                domain, device_id, *_ = identifier
                 if domain == "mqtt":
                     # Solar Assistant inverter
                     if "sa_inverter" in device_id:
