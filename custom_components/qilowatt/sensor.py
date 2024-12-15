@@ -2,10 +2,11 @@
 
 import logging
 
+from homeassistant.components.sensor import Entity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from qilowatt import WorkModeCommand
 
 from .const import CONF_INVERTER_ID, DATA_CLIENT, DOMAIN
@@ -34,6 +35,7 @@ async def async_setup_entry(
         sensor = WorkModeSensor(
             inverter_id,
             field,
+            config_entry,
         )
         workmode_sensors.append(sensor)
 
@@ -43,22 +45,38 @@ async def async_setup_entry(
 class WorkModeSensor(Entity):
     """Sensor for WORKMODE command fields."""
 
-    def __init__(self, inverter_id, field_name):
+    def __init__(self, inverter_id, field_name, entry) -> None:
         self._inverter_id = inverter_id
         self._field_name = field_name
-        self._name = f"{inverter_id} {field_name}"
+        self.entry = entry
+        self._name = field_name
+        self._unique_id = f"{inverter_id}_{field_name}"
         self._state = None
 
     @property
     def name(self):
+        """Return the name of the sensor."""
         return self._name
 
     @property
     def unique_id(self):
+        """Return the name of the sensor."""
         return self._name
 
     @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information for the sensor."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.entry.entry_id)},
+            name=self.entry.title,
+            manufacturer="Qilowatt",
+            model=self.entry.data["inverter_model"],
+            via_device=(DOMAIN, self.entry.entry_id),
+        )
+
+    @property
     def state(self):
+        """Return the state of the sensor."""
         return self._state
 
     async def async_added_to_hass(self):
