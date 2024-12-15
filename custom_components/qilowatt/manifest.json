@@ -1,6 +1,6 @@
 {
     "domain": "qilowatt",
-    "name": "Qilowatt Integration",
+    "name": "Qilowatt",
     "version": "1.0.0",
     "documentation": "https://github.com/qilowatt/qilowatt-ha",
     "requirements": ["qilowatt>=2024.11.9"],

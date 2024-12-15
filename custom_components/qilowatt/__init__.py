@@ -2,6 +2,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from . import sensor
 from .const import DATA_CLIENT, DOMAIN
