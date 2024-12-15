@@ -25,16 +25,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # Start the client asynchronously
     await client.start()
 
-    # # Create a HA device entry
-    # reg = dr.async_get(hass)
-    # reg.async_get_or_create(
-    #     config_entry_id=entry.entry_id,
-    #     identifiers={(DOMAIN, entry.unique_id or entry.entry_id)},
-    #     manufacturer="Qilowatt",
-    #     name=entry.title,
-    #     model=entry.data["inverter_model"],
-    # )
-
     # Use the new method and await it
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
 
