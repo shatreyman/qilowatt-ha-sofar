@@ -65,7 +65,7 @@ class SolarmanInverter(BaseInverter):
             self.get_state_float("grid_l2_power"),
             self.get_state_float("grid_l3_power"),
         ]
-        today = self.get_state_float("today_battery_charge")
+        today = self.get_state_float("today_energy_import")
         total = 0.0  # As per payload
         current = [0.0, 0.0, 0.0]  # As per payload
         voltage = [
