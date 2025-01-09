@@ -1,4 +1,5 @@
 from .solarassistant import SolarAssistantInverter
+from .solarman import SolarmanInverter
 
 # from .deye_synsynk import SynsynkInverter
 # from .growatt import GrowattInverter
@@ -6,6 +7,7 @@ from .solarassistant import SolarAssistantInverter
 INVERTER_INTEGRATIONS = {
     # "Synsynk": SynsynkInverter,
     "SolarAssistant": SolarAssistantInverter,
+    "Solarman": SolarmanInverter,
 }
 
 
