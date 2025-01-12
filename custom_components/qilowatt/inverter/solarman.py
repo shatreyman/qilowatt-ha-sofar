@@ -67,12 +67,12 @@ class SolarmanInverter(BaseInverter):
         ]
         today = self.get_state_float("today_energy_import")
         total = 0.0  # As per payload
-        current = [0.0, 0.0, 0.0]  # As per payload
         voltage = [
             self.get_state_float("grid_l1_voltage"),
             self.get_state_float("grid_l2_voltage"),
             self.get_state_float("grid_l3_voltage"),
         ]
+        current = [round(x / y, 2) for x, y in zip(power, voltage)]
         frequency = self.get_state_float("grid_frequency")
 
         return EnergyData(
