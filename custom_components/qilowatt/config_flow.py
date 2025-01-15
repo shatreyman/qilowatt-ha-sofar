@@ -10,6 +10,7 @@ from .const import (
     CONF_INVERTER_MODEL,
     CONF_MQTT_PASSWORD,
     CONF_MQTT_USERNAME,
+    CONF_BATTERY_SOC_SENSOR,
     DOMAIN,
 )
 
@@ -46,6 +47,7 @@ class QilowattConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_MQTT_PASSWORD): str,
                 vol.Required(CONF_INVERTER_ID): str,
                 vol.Required(CONF_DEVICE_ID): vol.In(inverter_options),
+                vol.Optional(CONF_BATTERY_SOC_SENSOR): str,
             }
         )
 

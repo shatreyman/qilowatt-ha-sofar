@@ -5,6 +5,7 @@ from homeassistant.helpers import entity_registry as er
 from qilowatt import EnergyData, MetricsData
 
 from .base_inverter import BaseInverter
+from .const import CONF_BATTERY_SOC_SENSOR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class SofarInverter(BaseInverter):
         super().__init__(hass, config_entry)
         self.hass = hass
         self.device_id = config_entry.data["device_id"]
+        self.battery_soc_sensor = config_entry.data.get(CONF_BATTERY_SOC_SENSOR)
         self.entity_registry = er.async_get(hass)
         self.inverter_entities = {}
         for entity in self.entity_registry.entities.values():
@@ -167,8 +169,11 @@ class SofarInverter(BaseInverter):
             self.get_state_text("sofar_fault_6"),
         ]
 
-        #battery_soc = self.get_state_int("sofar_battery_capacity_total")
-        battery_soc = self.get_external_state_float("sensor.compensation_sensor_sofar_battery_voltage_1") * 100
+        # Use custom battery_soc_sensor if provided, otherwise use the default
+        if self.battery_soc_sensor:
+            battery_soc = self.get_external_state_float(self.battery_soc_sensor) * 100
+        else:
+            battery_soc = self.get_state_int("sofar_battery_capacity_total") * 100
 
         # Calculate current from power and voltage
         load_current = [round(x / y, 2) for x, y in zip(load_power, self.voltage)]  
