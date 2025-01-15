@@ -109,10 +109,11 @@ class SofarInverter(BaseInverter):
 
     def get_energy_data(self):
         """Retrieve ENERGY data."""
+        # Sensor is in kW and swap positive with negative and vice versa
         power = [
-            self.get_state_float("sofar_active_power_pcc_l1") * 1000,
-            self.get_state_float("sofar_active_power_pcc_l2") * 1000,
-            self.get_state_float("sofar_active_power_pcc_l3") * 1000,
+            self.get_state_float("sofar_active_power_pcc_l1") * -1000,
+            self.get_state_float("sofar_active_power_pcc_l2") * -1000,
+            self.get_state_float("sofar_active_power_pcc_l3") * -1000,
         ]
         today = self.get_state_float("sofar_import_energy_today")
         total = 0.0  # As per payload
