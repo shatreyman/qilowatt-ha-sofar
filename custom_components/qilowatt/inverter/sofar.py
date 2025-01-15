@@ -173,7 +173,7 @@ class SofarInverter(BaseInverter):
         if self.battery_soc_sensor:
             battery_soc = self.get_external_state_float(self.battery_soc_sensor) * 100
         else:
-            battery_soc = self.get_state_int("sofar_battery_capacity_total") * 100
+            battery_soc = self.get_state_int("sofar_battery_capacity_total")
 
         # Calculate current from power and voltage
         load_current = [round(x / y, 2) for x, y in zip(load_power, self.voltage)]  
