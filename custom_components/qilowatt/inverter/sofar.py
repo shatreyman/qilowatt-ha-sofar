@@ -154,12 +154,10 @@ class SofarInverter(BaseInverter):
             self.get_state_float("sofar_pv_current_1"),
             self.get_state_float("sofar_pv_current_2"),
         ]
-        #load_power = self.get_state_float("sofar_active_power_load_sys") * 1000
-
+        
         # Create power array values from one sensor
-        combined_power = self.get_state_float("sofar_active_power_load_sys") * 1000
-        load_power = [combined_power / 3] * 3
-        load_power = [round(x) for x in load_power]
+        combined_power = round(self.get_state_float("sofar_active_power_load_sys") * 1000 / 3)
+        load_power = [combined_power] * 3
 
         alarm_codes = [
             self.get_state_text("sofar_fault_1"),
@@ -178,8 +176,7 @@ class SofarInverter(BaseInverter):
 
         # Calculate current from power and voltage
         load_current = [round(x / y, 2) for x, y in zip(load_power, self.voltage)]  
-        #load_current = [0, 0, 0]
-
+        
         battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
