@@ -172,7 +172,7 @@ class SofarInverter(BaseInverter):
 
         # Use custom battery_soc_sensor if provided, otherwise use the default
         if self.battery_soc_sensor:
-            battery_soc = self.get_external_state_float(self.battery_soc_sensor) * 100
+            battery_soc = round(self.get_external_state_float(self.battery_soc_sensor) * 100)
         else:
             battery_soc = self.get_state_int("sofar_battery_capacity_total")
 
