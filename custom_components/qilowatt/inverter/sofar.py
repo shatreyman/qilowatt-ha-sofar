@@ -5,7 +5,7 @@ from homeassistant.helpers import entity_registry as er
 from qilowatt import EnergyData, MetricsData
 
 from .base_inverter import BaseInverter
-from .const import CONF_BATTERY_SOC_SENSOR
+from ..const import CONF_BATTERY_SOC_SENSOR
 
 _LOGGER = logging.getLogger(__name__)
 
