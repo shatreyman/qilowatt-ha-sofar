@@ -7,9 +7,9 @@
                     "mqtt_password": "MQTT Password",
                     "inverter_id": "Qilowatt Inverter ID",
                     "device_id": "Inverter",
-                    "battery_soc_sensor": "Battery SoC Sensor entity"
+                    "battery_soc_sensor": "Battery SoC Sensor entity (Sofar only)"
                 },
-                "description": "Get the username, password and inverter ID from Qilowatt. Select a detected inverter. Optionally, specify a custom Battery SoC Sensor entity."
+                "description": "Get the username, password and inverter ID from Qilowatt. Select a detected inverter. If you select a Sofar inverter, you can optionally specify a custom Battery SoC Sensor entity."
             }
         }
     }

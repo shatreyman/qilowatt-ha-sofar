@@ -174,8 +174,14 @@ class SofarInverter(BaseInverter):
         else:
             battery_soc = self.get_state_int("sofar_battery_capacity_total")
 
-        # Calculate current from power and voltage
-        load_current = [round(x / y, 2) for x, y in zip(load_power, self.voltage)]  
+        # Calculate current from power and voltage, ensuring voltage is not zero
+        load_current = []
+        for x, y in zip(load_power, self.voltage):
+            if y == 0:
+                _LOGGER.warning(f"Voltage is zero for load power {x}, skipping division.")
+                load_current.append(0)  # or handle it differently if needed
+            else:
+                load_current.append(round(x / y, 2))
         
         battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
