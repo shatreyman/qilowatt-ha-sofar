@@ -84,29 +84,6 @@ class SofarInverter(BaseInverter):
             _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
         return default
 
-    def get_external_state_int(self, entity_id, default=0):
-        """Helper method to get an external sensor state as int."""
-        state = self.find_external_entity_state(entity_id)
-        if state and state.state not in ("unknown", "unavailable", ""):
-            try:
-                return int(float(state.state))
-            except ValueError:
-                _LOGGER.warning(f"Could not convert state of {entity_id} to int")
-        else:
-            _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
-        return default
-
-    def get_external_state_text(self, entity_id, default=""):
-        """Helper method to get an external sensor state as text (string)."""
-        state = self.find_external_entity_state(entity_id)
-        if state and state.state not in ("unknown", "unavailable", "", None):
-            return str(state.state)
-        else:
-            _LOGGER.warning(f"State of {entity_id} is unavailable, unknown, or empty")
-        return default
-
-    # Rest of your methods (get_energy_data, get_metrics_data, etc.) remain unchanged
-
     def get_energy_data(self):
         """Retrieve ENERGY data."""
         # Sensor is in kW and swap positive with negative and vice versa
@@ -174,8 +151,14 @@ class SofarInverter(BaseInverter):
         else:
             battery_soc = self.get_state_int("sofar_battery_capacity_total")
 
-        # Calculate current from power and voltage
-        load_current = [round(x / y, 2) for x, y in zip(load_power, self.voltage)]  
+        # Calculate current from power and voltage, ensuring voltage is not zero
+        load_current = []
+        for x, y in zip(load_power, self.voltage):
+            if y == 0:
+                _LOGGER.warning(f"Voltage is zero for load power {x}, skipping division.")
+                load_current.append(0)  # or handle it differently if needed
+            else:
+                load_current.append(round(x / y, 2)) 
         
         battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
