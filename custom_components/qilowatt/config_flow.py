@@ -24,38 +24,63 @@ class QilowattConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors = {}
         available_inverters = await self._discover_inverters()
-        if user_input is not None:
-            # Validate the input here if needed
-            selected_device_id = user_input["device_id"]
-            user_input[CONF_INVERTER_MODEL] = available_inverters[selected_device_id]["inverter_integration"]
-            return self.async_create_entry(
-                title=f"{available_inverters[selected_device_id]['name']}",
-                data=user_input,
-            )
 
-        inverter_options = {
-            device_id: inverter["name"]
-            for device_id, inverter in available_inverters.items()
-        }
+        if user_input is not None:
+            # Check if the user has selected a Sofar inverter
+            selected_device_id = user_input[CONF_DEVICE_ID]
+            selected_inverter = available_inverters[selected_device_id]
+            if selected_inverter["inverter_integration"] == "Sofar":
+                # If Sofar inverter is selected, show the form again with the battery_soc_sensor field
+                return await self.async_step_sofar_options(user_input)
+            else:
+                # For other inverters, proceed to create the entry
+                user_input[CONF_INVERTER_MODEL] = selected_inverter["inverter_integration"]
+                return self.async_create_entry(
+                    title=f"{selected_inverter['name']}",
+                    data=user_input,
+                )
 
         # Define the base schema without the battery_soc_sensor
         base_schema = {
             vol.Required(CONF_MQTT_USERNAME): str,
             vol.Required(CONF_MQTT_PASSWORD): str,
             vol.Required(CONF_INVERTER_ID): str,
-            vol.Required(CONF_DEVICE_ID): vol.In(inverter_options),
+            vol.Required(CONF_DEVICE_ID): vol.In({
+                device_id: inverter["name"]
+                for device_id, inverter in available_inverters.items()
+            }),
         }
 
-        # Add the battery_soc_sensor field conditionally if Sofar inverter is selected
-        if user_input and user_input.get(CONF_DEVICE_ID) in available_inverters:
-            selected_inverter = available_inverters[user_input[CONF_DEVICE_ID]]
-            if selected_inverter["inverter_integration"] == "Sofar":
-                base_schema[vol.Optional(CONF_BATTERY_SOC_SENSOR)] = str
+        return self.async_show_form(
+            step_id="user", data_schema=vol.Schema(base_schema), errors=errors
+        )
 
-        data_schema = vol.Schema(base_schema)
+    async def async_step_sofar_options(self, user_input):
+        """Handle the additional options for Sofar inverters."""
+        errors = {}
+
+        if user_input is not None:
+            # Add the inverter model to the user_input and create the entry
+            available_inverters = await self._discover_inverters()
+            selected_device_id = user_input[CONF_DEVICE_ID]
+            selected_inverter = available_inverters[selected_device_id]
+            user_input[CONF_INVERTER_MODEL] = selected_inverter["inverter_integration"]
+            return self.async_create_entry(
+                title=f"{selected_inverter['name']}",
+                data=user_input,
+            )
+
+        # Define the schema with the battery_soc_sensor field
+        sofar_schema = {
+            vol.Required(CONF_MQTT_USERNAME): str,
+            vol.Required(CONF_MQTT_PASSWORD): str,
+            vol.Required(CONF_INVERTER_ID): str,
+            vol.Required(CONF_DEVICE_ID): str,
+            vol.Optional(CONF_BATTERY_SOC_SENSOR): str,
+        }
 
         return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
+            step_id="sofar_options", data_schema=vol.Schema(sofar_schema), errors=errors
         )
 
     async def _discover_inverters(self):
