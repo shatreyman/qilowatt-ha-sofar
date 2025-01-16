@@ -5,7 +5,7 @@ from homeassistant.helpers import entity_registry as er
 from qilowatt import EnergyData, MetricsData
 
 from .base_inverter import BaseInverter
-from ..const import CONF_BATTERY_SOC_SENSOR
+from ..const import CONF_BATTERY_SOC_SENSOR, CONF_GRID_EXPORT_LIMIT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ class SofarInverter(BaseInverter):
         self.hass = hass
         self.device_id = config_entry.data["device_id"]
         self.battery_soc_sensor = config_entry.data.get(CONF_BATTERY_SOC_SENSOR)
+        self.grid_export_limit = config_entry.data.get(CONF_GRID_EXPORT_LIMIT, 15000)
         self.entity_registry = er.async_get(hass)
         self.inverter_entities = {}
         for entity in self.entity_registry.entities.values():
@@ -164,7 +165,7 @@ class SofarInverter(BaseInverter):
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
         inverter_status = 2  # As per payload
-        grid_export_limit = 15000
+        grid_export_limit = self.grid_export_limit
         battery_temperature = [self.get_state_float("sofar_battery_temperature_1")]
         inverter_temperature = self.get_state_float("sofar_inverter_temperature_1")
 
