@@ -17,7 +17,7 @@ class SofarInverter(BaseInverter):
         super().__init__(hass, config_entry)
         self.hass = hass
         self.device_id = config_entry.data["device_id"]
-        self.battery_soc_sensor = config_entry.data.get(CONF_BATTERY_SOC_SENSOR)
+        self.battery_soc_sensor = config_entry.data.get(CONF_BATTERY_SOC_SENSOR, "sofar_battery_capacity_total")
         self.grid_export_limit = config_entry.data.get(CONF_GRID_EXPORT_LIMIT, 15000)
         self.entity_registry = er.async_get(hass)
         self.inverter_entities = {}
@@ -132,7 +132,7 @@ class SofarInverter(BaseInverter):
             self.get_state_float("sofar_pv_current_1"),
             self.get_state_float("sofar_pv_current_2"),
         ]
-        
+
         # Create power array values from one sensor
         combined_power = round(self.get_state_float("sofar_active_power_load_sys") * 1000 / 3)
         load_power = [combined_power] * 3
@@ -146,21 +146,21 @@ class SofarInverter(BaseInverter):
             self.get_state_text("sofar_fault_6"),
         ]
 
-        # Use custom battery_soc_sensor if provided, otherwise use the default
-        if self.battery_soc_sensor:
-            battery_soc = round(self.get_external_state_float(self.battery_soc_sensor) * 100)
-        else:
+        # By default, use the "sofar_battery_capacity_total" sensor. If a custom sensor is provided, use that instead.
+        if self.battery_soc_sensor == "sofar_battery_capacity_total":
             battery_soc = self.get_state_int("sofar_battery_capacity_total")
+        else:
+            battery_soc = round(self.get_external_state_float(self.battery_soc_sensor) * 100)
 
         # Calculate current from power and voltage, ensuring voltage is not zero
         load_current = []
         for x, y in zip(load_power, self.voltage):
             if y == 0:
                 _LOGGER.warning(f"Voltage is zero for load power {x}, skipping division.")
-                load_current.append(0)  # or handle it differently if needed
+                load_current.append(0)
             else:
-                load_current.append(round(x / y, 2)) 
-        
+                load_current.append(round(x / y, 2))
+
         battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
