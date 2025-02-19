@@ -85,6 +85,18 @@ class SofarInverter(BaseInverter):
             _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
         return default
 
+    def get_external_state_int(self, entity_id, default=0):
+        """Helper method to get an external sensor state as int."""
+        state = self.find_external_entity_state(entity_id)
+        if state and state.state not in ("unknown", "unavailable", ""):
+            try:
+                return int(float(state.state))
+            except ValueError:
+                _LOGGER.warning(f"Could not convert state of {entity_id} to int")
+        else:
+            _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
+        return default
+
     def get_energy_data(self):
         """Retrieve ENERGY data."""
         # Sensor is in kW and swap positive with negative and vice versa
@@ -137,20 +149,13 @@ class SofarInverter(BaseInverter):
         combined_power = round(self.get_state_float("sofar_active_power_load_sys") * 1000 / 3)
         load_power = [combined_power] * 3
 
-        alarm_codes = [
-            self.get_state_text("sofar_fault_1"),
-            self.get_state_text("sofar_fault_2"),
-            self.get_state_text("sofar_fault_3"),
-            self.get_state_text("sofar_fault_4"),
-            self.get_state_text("sofar_fault_5"),
-            self.get_state_text("sofar_fault_6"),
-        ]
+        alarm_codes = [0]
 
         # By default, use the "sofar_battery_capacity_total" sensor. If a custom sensor is provided, use that instead.
         if self.battery_soc_sensor == "sofar_battery_capacity_total":
             battery_soc = self.get_state_int("sofar_battery_capacity_total")
         else:
-            battery_soc = round(self.get_external_state_float(self.battery_soc_sensor) * 100)
+            battery_soc = round(self.get_external_state_int(self.battery_soc_sensor))
 
         # Calculate current from power and voltage, ensuring voltage is not zero
         load_current = []
@@ -161,10 +166,12 @@ class SofarInverter(BaseInverter):
             else:
                 load_current.append(round(x / y, 2))
 
-        battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
+        # battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
+        # Get power from battert emulator as sofar does not output values when passive mode power are updated for 2 minutes
+        battery_power = [self.get_external_state_float("sensor.be_stat_batt_power") + 1200]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
-        inverter_status = 2  # As per payload
+        inverter_status = 0  # As per payload
         grid_export_limit = self.grid_export_limit
         battery_temperature = [self.get_state_float("sofar_battery_temperature_1")]
         inverter_temperature = self.get_state_float("sofar_inverter_temperature_1")
