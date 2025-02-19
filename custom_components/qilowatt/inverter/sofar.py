@@ -137,14 +137,7 @@ class SofarInverter(BaseInverter):
         combined_power = round(self.get_state_float("sofar_active_power_load_sys") * 1000 / 3)
         load_power = [combined_power] * 3
 
-        alarm_codes = [
-            self.get_state_text("sofar_fault_1"),
-            self.get_state_text("sofar_fault_2"),
-            self.get_state_text("sofar_fault_3"),
-            self.get_state_text("sofar_fault_4"),
-            self.get_state_text("sofar_fault_5"),
-            self.get_state_text("sofar_fault_6"),
-        ]
+        alarm_codes = [0]
 
         # By default, use the "sofar_battery_capacity_total" sensor. If a custom sensor is provided, use that instead.
         if self.battery_soc_sensor == "sofar_battery_capacity_total":
@@ -164,7 +157,7 @@ class SofarInverter(BaseInverter):
         battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
-        inverter_status = 2  # As per payload
+        inverter_status = 0  # As per payload
         grid_export_limit = self.grid_export_limit
         battery_temperature = [self.get_state_float("sofar_battery_temperature_1")]
         inverter_temperature = self.get_state_float("sofar_inverter_temperature_1")
