@@ -103,13 +103,13 @@ class SolarAssistantInverter(BaseInverter):
             self.get_state_float("load_power_2"),
             self.get_state_float("load_power_3"),
         ]
-        alarm_codes = [0, 0, 0, 0, 0, 0]  # As per payload
+        alarm_codes = [0]  # As per payload
         battery_soc = self.get_state_int("battery_state_of_charge")
         load_current = [0.0, 0.0, 0.0]  # As per payload
         battery_power = [self.get_state_float("battery_power")]
         battery_current = [self.get_state_float("battery_current")]
         battery_voltage = [self.get_state_float("battery_voltage")]
-        inverter_status = 2  # As per payload
+        inverter_status = 0  # As per payload
         grid_export_limit = self.get_state_float("max_sell_power")
         battery_temperature = [self.get_state_float("battery_temperature")]
         inverter_temperature = self.get_state_float("temperature")

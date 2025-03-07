@@ -67,12 +67,12 @@ class SolarmanInverter(BaseInverter):
         ]
         today = self.get_state_float("today_energy_import")
         total = 0.0  # As per payload
-        current = [0.0, 0.0, 0.0]  # As per payload
         voltage = [
             self.get_state_float("grid_l1_voltage"),
             self.get_state_float("grid_l2_voltage"),
             self.get_state_float("grid_l3_voltage"),
         ]
+        current = [round(x / y, 2) for x, y in zip(power, voltage)]
         frequency = self.get_state_float("grid_frequency")
 
         return EnergyData(
@@ -106,8 +106,8 @@ class SolarmanInverter(BaseInverter):
         alarm_codes = [0, 0, 0, 0, 0, 0]  # As per payload
         battery_soc = self.get_state_int("_battery")
         load_current = [0.0, 0.0, 0.0]  # As per payload
-        battery_power = [self.get_state_float("battery_power")]
-        battery_current = [self.get_state_float("battery_current")]
+        battery_power = [-1 * self.get_state_float("battery_power")]
+        battery_current = [-1 * self.get_state_float("battery_current")]
         battery_voltage = [self.get_state_float("battery_voltage")]
         inverter_status = 2  # As per payload
         grid_export_limit = self.get_state_float("pv_max_power")
