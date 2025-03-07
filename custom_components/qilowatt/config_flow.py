@@ -10,8 +10,6 @@ from .const import (
     CONF_INVERTER_MODEL,
     CONF_MQTT_PASSWORD,
     CONF_MQTT_USERNAME,
-    CONF_BATTERY_SOC_SENSOR,
-    CONF_GRID_EXPORT_LIMIT,
     DOMAIN,
 )
 
@@ -48,8 +46,6 @@ class QilowattConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_MQTT_PASSWORD): str,
                 vol.Required(CONF_INVERTER_ID): str,
                 vol.Required(CONF_DEVICE_ID): vol.In(inverter_options),
-                vol.Optional(CONF_BATTERY_SOC_SENSOR, default="sofar_battery_capacity_total"): str,
-                vol.Optional(CONF_GRID_EXPORT_LIMIT, default=15000): int,
             }
         )
 
