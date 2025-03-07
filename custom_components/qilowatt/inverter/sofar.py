@@ -5,7 +5,6 @@ from homeassistant.helpers import entity_registry as er
 from qilowatt import EnergyData, MetricsData
 
 from .base_inverter import BaseInverter
-from ..const import CONF_BATTERY_SOC_SENSOR, CONF_GRID_EXPORT_LIMIT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,8 +16,6 @@ class SofarInverter(BaseInverter):
         super().__init__(hass, config_entry)
         self.hass = hass
         self.device_id = config_entry.data["device_id"]
-        self.battery_soc_sensor = config_entry.data.get(CONF_BATTERY_SOC_SENSOR, "sofar_battery_capacity_total")
-        self.grid_export_limit = config_entry.data.get(CONF_GRID_EXPORT_LIMIT, 15000)
         self.entity_registry = er.async_get(hass)
         self.inverter_entities = {}
         for entity in self.entity_registry.entities.values():
@@ -67,34 +64,6 @@ class SofarInverter(BaseInverter):
             return str(state.state)
         else:
             _LOGGER.warning(f"State of {entity_id} is unavailable, unknown, or empty")
-        return default
-
-    def find_external_entity_state(self, entity_id):
-        """Helper method to find a state for external sensors by entity_id."""
-        return self.hass.states.get(entity_id)
-
-    def get_external_state_float(self, entity_id, default=0.0):
-        """Helper method to get an external sensor state as float."""
-        state = self.find_external_entity_state(entity_id)
-        if state and state.state not in ("unknown", "unavailable", ""):
-            try:
-                return float(state.state)
-            except ValueError:
-                _LOGGER.warning(f"Could not convert state of {entity_id} to float")
-        else:
-            _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
-        return default
-
-    def get_external_state_int(self, entity_id, default=0):
-        """Helper method to get an external sensor state as int."""
-        state = self.find_external_entity_state(entity_id)
-        if state and state.state not in ("unknown", "unavailable", ""):
-            try:
-                return int(float(state.state))
-            except ValueError:
-                _LOGGER.warning(f"Could not convert state of {entity_id} to int")
-        else:
-            _LOGGER.warning(f"State of {entity_id} is unavailable or unknown")
         return default
 
     def get_energy_data(self):
@@ -150,12 +119,7 @@ class SofarInverter(BaseInverter):
         load_power = [combined_power] * 3
 
         alarm_codes = [0]
-
-        # By default, use the "sofar_battery_capacity_total" sensor. If a custom sensor is provided, use that instead.
-        if self.battery_soc_sensor == "sofar_battery_capacity_total":
-            battery_soc = self.get_state_int("sofar_battery_capacity_total")
-        else:
-            battery_soc = round(self.get_external_state_int(self.battery_soc_sensor))
+        battery_soc = self.get_state_int("sofar_battery_capacity_total")
 
         # Calculate current from power and voltage, ensuring voltage is not zero
         load_current = []
@@ -166,9 +130,7 @@ class SofarInverter(BaseInverter):
             else:
                 load_current.append(round(x / y, 2))
 
-        # battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
-        # Get power from battert emulator as sofar does not output values when passive mode power are updated for 2 minutes
-        battery_power = [self.get_external_state_float("sensor.be_stat_batt_power") + 1200]
+        battery_power = [self.get_state_float("sofar_battery_power_total") * 1000]
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
         inverter_status = 0  # As per payload
