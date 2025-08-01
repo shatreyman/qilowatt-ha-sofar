@@ -51,7 +51,7 @@ uart:
   id: mod_bus
   tx_pin: 22 
   rx_pin: 21
-  baud_rate: 115200
+  baud_rate: 115200 # change this to 9600 is you use BMS port
   stop_bits: 1
 
 modbus:
