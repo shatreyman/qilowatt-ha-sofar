@@ -119,7 +119,7 @@ class SofarInverter(BaseInverter):
         load_power = [combined_power] * 3
 
         alarm_codes = [0]
-        battery_soc = self.get_state_int("sofar_battery_capacity_total")
+        battery_soc = [self.get_state_int("sofar_battery_capacity_total")]
 
         # Calculate current from power and voltage, ensuring voltage is not zero
         load_current = []
@@ -134,9 +134,9 @@ class SofarInverter(BaseInverter):
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
         inverter_status = 0  # As per payload
-        grid_export_limit = self.grid_export_limit
+        grid_export_limit = [self.get_state_float("sofar_feedin_max_power")]
         battery_temperature = [self.get_state_float("sofar_battery_temperature_1")]
-        inverter_temperature = self.get_state_float("sofar_inverter_temperature_1")
+        inverter_temperature = [self.get_state_float("sofar_inverter_temperature_1")]
 
         return MetricsData(
             PvPower=pv_power,
