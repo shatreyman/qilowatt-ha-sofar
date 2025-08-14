@@ -23,15 +23,28 @@ class SofarInverter(BaseInverter):
                 self.inverter_entities[entity.entity_id] = entity.name
 
     def find_entity_state(self, entity_id):
-        """Helper method to find a state by entity_id (for Sofar sensors)."""
-        return next(
-            (
-                self.hass.states.get(entity)
-                for entity in self.inverter_entities
-                if entity.endswith(entity_id)
-            ),
-            None,
-        )
+        """Find entity state by suffix within this device; fallback to global search."""
+        # 1) Поиск среди сущностей этого устройства
+        for entity in self.inverter_entities:
+            if entity.endswith(entity_id):
+                return self.hass.states.get(entity)
+    
+        # 2) Fallback: глобальный поиск
+        if "." in entity_id:
+            # уже полный ID, пробуем напрямую
+            return self.hass.states.get(entity_id)
+        else:
+            # пробуем sensor
+            state = self.hass.states.get(f"sensor.{entity_id}")
+            if state:
+                return state
+            # пробуем number
+            return self.hass.states.get(f"number.{entity_id}")
+
+
+
+
+
 
     def get_state_float(self, entity_id, default=0.0):
         """Helper method to get a sensor state as float (for Sofar sensors)."""
@@ -119,7 +132,32 @@ class SofarInverter(BaseInverter):
         load_power = [combined_power] * 3
 
         alarm_codes = [0]
-        battery_soc = [self.get_state_int("sofar_battery_capacity_total")]
+
+# --- begin debug: verify device_id mapping ---
+        ent_id = "sensor.sofar_battery_capacity_total"
+        ent = self.entity_registry.async_get(ent_id)
+        _LOGGER.warning(
+            "QILOWATT DEBUG: config device_id=%s; %s.device_id=%s; inverter_entities=%d; has_batt_cap=%s",
+            self.device_id,
+            ent_id,
+            getattr(ent, "device_id", None),
+            len(self.inverter_entities),
+            any(e.endswith("sofar_battery_capacity_total") for e in self.inverter_entities),
+        )
+# --- end debug ---
+
+
+        
+#        battery_soc25 = 3
+#        _LOGGER.warning(f"battery_soc25: {battery_soc25}")
+        battery_soc25 = self.hass.states.get("sensor.sofar_battery_capacity_total").state
+        _LOGGER.warning(f"battery_soc25: {battery_soc25}")        
+        
+        
+        
+        battery_soc = self.get_state_int("sofar_battery_capacity_total")
+#        battery_soc = self.hass.states.get("sensor.sofar_battery_capacity_total").state
+
 
         # Calculate current from power and voltage, ensuring voltage is not zero
         load_current = []
@@ -134,9 +172,9 @@ class SofarInverter(BaseInverter):
         battery_current = [self.get_state_float("sofar_battery_current_1")]
         battery_voltage = [self.get_state_float("sofar_battery_voltage_1")]
         inverter_status = 0  # As per payload
-        grid_export_limit = [self.get_state_float("sofar_feedin_max_power")]
+        grid_export_limit = self.get_state_float("sofar_feedin_max_power")
         battery_temperature = [self.get_state_float("sofar_battery_temperature_1")]
-        inverter_temperature = [self.get_state_float("sofar_inverter_temperature_1")]
+        inverter_temperature = self.get_state_float("sofar_inverter_temperature_1")
 
         return MetricsData(
             PvPower=pv_power,
